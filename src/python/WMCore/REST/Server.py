@@ -2097,7 +2097,11 @@ class DatabaseRESTApi(RESTApi):
         trace and cherrypy.log("%s execute: %s %s" % (trace, binds, kwbinds))
         if request.db['type'].__name__ == 'MySQLdb':
             return c, c.execute(sql, kwbinds)
-        return c, c.execute(None, *binds, **kwbinds)
+        st = time.time()
+        ret = c.execute(None, *binds, **kwbinds)
+        ed = time.time() - st
+        cherrypy.log("executemany time: %6f" % (ed,))
+        return c, ret
 
     def executemany(self, sql, *binds, **kwbinds):
         """Execute a SQL statement many times with bind variables.
@@ -2115,7 +2119,11 @@ class DatabaseRESTApi(RESTApi):
         trace and cherrypy.log("%s executemany: %s %s" % (trace, binds, kwbinds))
         if request.db['type'].__name__ == 'MySQLdb':
             return c, c.executemany(sql, binds[0])
-        return c, c.executemany(None, *binds, **kwbinds)
+        st = time.time()
+        ret = c.executemany(None, *binds, **kwbinds)
+        ed = time.time() - st
+        cherrypy.log("executemany time: %6f" % (ed,))
+        return c, ret
 
     def query(self, match, select, sql, *binds, **kwbinds):
         """Convenience function to :meth:`execute` a query, set ``"columns"`` in
