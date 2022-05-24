@@ -110,6 +110,7 @@ class Logger(LogManager):
         outheaders = response.headers
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
+        trace = cherrypy.request.db["handle"]["trace"]
         if hasattr(request, 'start_time'):
             delta_time = (time.time() - request.start_time) * 1e6
         else:
@@ -117,7 +118,8 @@ class Logger(LogManager):
         msg = ('%(t)s %(H)s %(h)s "%(r)s" %(s)s'
                ' [data: %(i)s in %(b)s out %(T).0f us ]'
                ' [auth: %(AS)s "%(AU)s" "%(AC)s" ]'
-               ' [ref: "%(f)s" "%(a)s" ]') % \
+               ' [ref: "%(f)s" "%(a)s" ]'
+               ' %(tr)s') % \
               {'t': self.time(),
                'H': self.host,
                'h': remote.name or remote.ip,
@@ -134,7 +136,8 @@ class Logger(LogManager):
                'AU': inheaders.get("cms-auth-cert", inheaders.get("cms-auth-host", "")),
                'AC': getattr(request.cookie.get("cms-auth", None), "value", ""),
                'f': inheaders.get("Referer", ""),
-               'a': inheaders.get("User-Agent", "")}
+               'a': inheaders.get("User-Agent", ""),
+               'tr': trace}
         self.access_log.log(logging.INFO, msg)
         self.access_log.propagate = False  # to avoid duplicate records on the log
         self.error_log.propagate = False  # to avoid duplicate records on the log
