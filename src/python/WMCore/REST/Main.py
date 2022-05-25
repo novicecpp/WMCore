@@ -121,7 +121,7 @@ class Logger(LogManager):
                ' [ref: "%(f)s" "%(a)s" ]'
                ' %(tr)s') % \
               {'t': self.time(),
-               'tid': trace_id,
+               'tid': trace,
                'H': self.host,
                'h': remote.name or remote.ip,
                'r': request.request_line,
