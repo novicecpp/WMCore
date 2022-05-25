@@ -110,17 +110,18 @@ class Logger(LogManager):
         outheaders = response.headers
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
-        trace = cherrypy.request.db["handle"]["trace"]
+        trace = cherrypy.request.request_trace_id
         if hasattr(request, 'start_time'):
             delta_time = (time.time() - request.start_time) * 1e6
         else:
             delta_time = 0
-        msg = ('%(t)s %(H)s %(h)s "%(r)s" %(s)s'
+        msg = ('%(t)s %(tid)s %(H)s %(h)s "%(r)s" %(s)s'
                ' [data: %(i)s in %(b)s out %(T).0f us ]'
                ' [auth: %(AS)s "%(AU)s" "%(AC)s" ]'
                ' [ref: "%(f)s" "%(a)s" ]'
                ' %(tr)s') % \
               {'t': self.time(),
+               'tid': trace_id,
                'H': self.host,
                'h': remote.name or remote.ip,
                'r': request.request_line,
