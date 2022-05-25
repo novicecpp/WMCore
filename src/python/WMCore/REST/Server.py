@@ -1929,6 +1929,8 @@ class DatabaseRESTApi(RESTApi):
         # Remember database instance choice, but don't do anything about it yet.
         request.db = {"instance": instance, "type": db["type"], "pool": db["pool"],
                       "handle": None, "last_sql": None, "last_bind": (None, None)}
+        request.request_trace_id = "".join(random.sample(string.ascii_letters, 16))
+
 
     def _dbenter(self, apiobj, method, api, param, safe):
         """Acquire database connection just before invoking the entity.
