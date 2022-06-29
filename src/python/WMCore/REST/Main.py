@@ -99,7 +99,7 @@ class TraceIDFilter(logging.Filter):
     """
     def filter(self, record):
         try:
-            record.trace_id = cherrypy.request.header['_trace_id']
+            record.trace_id = cherrypy.request.trace_id
         except Exception:  # pylint: disable=broad-except
             record.trace_id = ""
         return True
@@ -123,7 +123,6 @@ class Logger(LogManager):
         self.error_log = logger
 
 
-
     def access(self):
         """Record one client access."""
         request = cherrypy.request
@@ -134,7 +133,7 @@ class Logger(LogManager):
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
         try:
-            trace = cherrypy.request.headers['_trace_id']
+            trace = cherrypy.request.trace_id
         except Exception:
             trace = ''
         if hasattr(request, 'start_time'):
