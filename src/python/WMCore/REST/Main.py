@@ -113,9 +113,9 @@ class Logger(LogManager):
         self._new_error_log()
 
     def _new_error_log(self):
-        logger = logging.getLogger(self.erorr_log.name)
+        logger = logging.getLogger('cherrypy.error')
         handler = logging.StreamHandler(sys.stderr)
-        handler.setLevel(self.error_log.level)
+        handler.setLevel(20)
         handler.setFormatter('%(trace)s%(message)s')
         f = TraceIDFilter()
         handler.addFilter(f)
