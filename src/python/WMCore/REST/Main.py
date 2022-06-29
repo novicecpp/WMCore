@@ -110,8 +110,6 @@ class Logger(LogManager):
     def __init__(self, *args, **kwargs):
         self.host = socket.gethostname()
         LogManager.__init__(self, *args, **kwargs)
-        import pdb; pdb.set_trace()
-
 
     def access(self):
         """Record one client access."""
@@ -122,7 +120,10 @@ class Logger(LogManager):
         outheaders = response.headers
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
-        trace = cherrypy.request.headers['_trace_id']
+        try:
+            trace = cherrypy.request.headers['_trace_id']
+        except Exception:
+            trace = ''
         if hasattr(request, 'start_time'):
             delta_time = (time.time() - request.start_time) * 1e6
         else:
