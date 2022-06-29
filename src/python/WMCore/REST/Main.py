@@ -23,7 +23,9 @@ import socket
 import sys
 import _thread
 import time
+import datetime
 import traceback
+import traceback as tb
 from argparse import ArgumentParser
 from io import BytesIO, StringIO
 from glob import glob
@@ -110,15 +112,20 @@ class Logger(LogManager):
         outheaders = response.headers
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
+        try:
+            trace_id = cherrypy.request.trace_id
+        except Exception:  # pylint: disable=broad-except
+            trace = ''
         if hasattr(request, 'start_time'):
             delta_time = (time.time() - request.start_time) * 1e6
         else:
             delta_time = 0
-        msg = ('%(t)s %(H)s %(h)s "%(r)s" %(s)s'
+        msg = ('%(t)s %(tid)s %(H)s %(h)s "%(r)s" %(s)s'
                ' [data: %(i)s in %(b)s out %(T).0f us ]'
                ' [auth: %(AS)s "%(AU)s" "%(AC)s" ]'
                ' [ref: "%(f)s" "%(a)s" ]') % \
               {'t': self.time(),
+               'tid': trace_id,
                'H': self.host,
                'h': remote.name or remote.ip,
                'r': request.request_line,
@@ -138,6 +145,46 @@ class Logger(LogManager):
         self.access_log.log(logging.INFO, msg)
         self.access_log.propagate = False  # to avoid duplicate records on the log
         self.error_log.propagate = False  # to avoid duplicate records on the log
+
+
+    def error(self, msg='', context='', severity=logging.INFO,
+              traceback=False):
+        """override error to have custom format of log with trace
+        """
+        exc_info = None
+        if traceback:
+            exc_info = cherrypy._cperror._exc_info()
+        try:
+            if getattr(cherrypy.request, 'trace_id', False):
+                trace_id = cherrypy.request.trace_id
+            elif getattr(cherrypy.thread_data, 'request_trace_id', False):
+                trace_id = cherrypy.thread_data.request_trace_id
+            else:
+                trace_id = ''
+        except Exception:  # pylint: disable=broad-except
+            trace_id = ""
+        if trace_id:
+            self.error_log.log(
+                severity,
+                ' '.join((self.time(), trace_id, context, msg)),
+                exc_info=exc_info,
+            )
+        else:
+            self.error_log.log(
+                severity,
+                ' '.join((self.time(), context, msg)),
+                exc_info=exc_info,
+            )
+
+    def time(self):
+        """Return now() in Apache Common Log Format with timezone."""
+        now = datetime.datetime.now()
+        monthnames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
+                      'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+        month = monthnames[now.month - 1].capitalize()
+        utc_offset = now.astimezone().strftime('%z')
+        return ('[%02d/%s/%04d:%02d:%02d:%02d %s]' %
+                (now.day, month, now.year, now.hour, now.minute, now.second, utc_offset))
 
 
 class RESTMain(object):

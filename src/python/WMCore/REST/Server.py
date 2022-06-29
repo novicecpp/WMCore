@@ -747,6 +747,9 @@ class MiniRESTApi(object):
           API handler response, often a generator itself, is usually wrapped
           in couple of layers of additional generators which format and
           compress the output, and handle entity tags generation and matching."""
+        # create trace_id as earliest as possible and put it to cherrypy.request
+        trace_id  = "".join(random.sample(string.ascii_letters, 12))
+        cherrypy.request.trace_id = trace_id
 
         # Make sure the request method is something we actually support.
         if request.method not in self.methods:
@@ -1344,8 +1347,8 @@ class DBConnectionPool(Thread):
 
         sigready = random.choice(self.sigready)
         arg = {"error": None, "handle": None, "signal": sigready,
-               "abandoned": False, "id": id, "module": module}
-
+               "abandoned": False, "id": id, "module": module,
+               "request_trace_id": cherrypy.request.trace_id}
         self.sigqueue.acquire()
         self.queue.append((self._connect, arg))
         self.sigqueue.notifyAll()
@@ -1395,8 +1398,9 @@ class DBConnectionPool(Thread):
                        instead of queuing it for reuse.
         :returns: Nothing."""
 
+        args = {"dbh": dbh, "request_trace_id": cherrypy.request.trace_id}
         self.sigqueue.acquire()
-        self.queue.insert(0, ((bad and self._disconnect) or self._release, dbh))
+        self.queue.insert(0, ((bad and self._disconnect) or self._release, args))
         self.sigqueue.notifyAll()
         self.sigqueue.release()
 
@@ -1464,6 +1468,9 @@ class DBConnectionPool(Thread):
 
     def _connect(self, req):
         """Action handler to fulfill a connection request."""
+        # set trace_id to cherrypy.thread_data for use in cherrypy.log
+        cherrypy.thread_data.request_trace_id = req['request_trace_id']
+
         s = self.dbspec
         dbh, err = None, None
 
@@ -1587,9 +1594,12 @@ class DBConnectionPool(Thread):
         # OK, connection's all good.
         trace and cherrypy.log("%s connection established" % trace)
 
-    def _release(self, dbh):
+    def _release(self, args):
         """Action handler to release a connection back to the pool."""
         try:
+            # set trace_id to cherrypy.thread_data for use in cherrypy.log
+            cherrypy.thread_data.request_trace_id = args["request_trace_id"]
+            dbh = args["dbh"]
             # Check the handle didn't get corrupted.
             assert dbh["pool"] == self
             assert dbh["connection"]
