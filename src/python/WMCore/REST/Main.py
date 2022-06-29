@@ -93,16 +93,16 @@ class ProfiledApp(Application):
 
         return self.profiler.run(gather)
 
-#class TraceIDFilter(logging.Filter):
-#    """
-#    Add trace_id to log record and use it in formatter.
-#    """
-#    def filter(self, record):
-#        try:
-#            record.trace_id = cherrypy.request.header['_trace_id'] + ' '
-#        except Exception:  # pylint: disable=broad-except
-#            record.trace_id = ""
-#        return True
+class TraceIDFilter(logging.Filter):
+    """
+    Add trace_id to log record and use it in formatter.
+    """
+    def filter(self, record):
+        try:
+            record.trace_id = cherrypy.request.header['_trace_id']
+        except Exception:  # pylint: disable=broad-except
+            record.trace_id = ""
+        return True
 
 class Logger(LogManager):
     """Custom logger to record information in format we prefer."""
@@ -110,6 +110,19 @@ class Logger(LogManager):
     def __init__(self, *args, **kwargs):
         self.host = socket.gethostname()
         LogManager.__init__(self, *args, **kwargs)
+        self._new_error_log()
+
+    def _new_error_log(self):
+        logger = logging.getLogger(self.erorr_log.name)
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setLevel(self.error_log.level)
+        handler.setFormatter('%(trace)s%(message)s')
+        f = TraceIDFilter()
+        handler.addFilter(f)
+        logger.addHandler(handler)
+        self.error_log = logger
+
+
 
     def access(self):
         """Record one client access."""
@@ -255,7 +268,7 @@ class RESTMain(object):
         # Apply security customisation.
         if hasattr(self.srvconfig, 'authz_defaults'):
             defsec = self.srvconfig.authz_defaults
-            cpconfig.update({'tools.cms_auth.on': True})
+            cpconfig.update({'tools.cms_authandler.on': True})
             cpconfig.update({'tools.cms_auth.role': defsec['role']})
             cpconfig.update({'tools.cms_auth.group': defsec['group']})
             cpconfig.update({'tools.cms_auth.site': defsec['site']})
