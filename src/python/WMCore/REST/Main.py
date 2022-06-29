@@ -93,6 +93,16 @@ class ProfiledApp(Application):
 
         return self.profiler.run(gather)
 
+#class TraceIDFilter(logging.Filter):
+#    """
+#    Add trace_id to log record and use it in formatter.
+#    """
+#    def filter(self, record):
+#        try:
+#            record.trace_id = cherrypy.request.header['_trace_id'] + ' '
+#        except Exception:  # pylint: disable=broad-except
+#            record.trace_id = ""
+#        return True
 
 class Logger(LogManager):
     """Custom logger to record information in format we prefer."""
@@ -100,6 +110,8 @@ class Logger(LogManager):
     def __init__(self, *args, **kwargs):
         self.host = socket.gethostname()
         LogManager.__init__(self, *args, **kwargs)
+        import pdb; pdb.set_trace()
+
 
     def access(self):
         """Record one client access."""
@@ -110,7 +122,7 @@ class Logger(LogManager):
         outheaders = response.headers
         wfile = request.wsgi_environ.get('cherrypy.wfile', None)
         nout = (wfile and wfile.bytes_written) or outheaders.get('Content-Length', 0)
-        trace = cherrypy.request.request_trace_id
+        trace = cherrypy.request.headers['_trace_id']
         if hasattr(request, 'start_time'):
             delta_time = (time.time() - request.start_time) * 1e6
         else:

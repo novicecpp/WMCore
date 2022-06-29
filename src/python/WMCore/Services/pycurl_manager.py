@@ -100,9 +100,9 @@ class ResponseHeader(object):
 
     def parse(self, response):
         """Parse response header and assign class member data"""
-        startRegex = r"^HTTP/\d.\d \d{3}"
-        continueRegex = r"^HTTP/\d.\d 100"  # Continue: client should continue its request
-        replaceRegex = r"^HTTP/\d.\d"
+        startRegex = r"^HTTP/(1\.1|2) \d{3}"
+        continueRegex = r"^HTTP/(1\.1|2) 100"  # Continue: client should continue its request
+        replaceRegex = r"^HTTP/(1\.1|2)"
 
         response = decodeBytesToUnicode(response)
 
@@ -114,9 +114,13 @@ class ResponseHeader(object):
                 if re.search(continueRegex, row):
                     continue
                 res = re.sub(replaceRegex, "", row).strip()
-                status, reason = res.split(' ', 1)
-                self.status = int(status)
-                self.reason = reason
+                res_split = res.split(' ', 1)
+                if len(res_split) == 1:
+                    self.status = int(res)
+                    self.reason = ''
+                else:
+                    self.status = int(res_split[0])
+                    self.reason = res_split[1]
                 continue
             try:
                 key, val = row.split(':', 1)
