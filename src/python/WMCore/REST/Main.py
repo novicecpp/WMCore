@@ -110,7 +110,7 @@ class Logger(LogManager):
     def __init__(self, *args, **kwargs):
         self.host = socket.gethostname()
         LogManager.__init__(self, *args, **kwargs)
-        self._new_error_log()
+        #self._new_error_log()
 
     def _new_error_log(self):
         logger = logging.getLogger('cherrypy.error')
