@@ -1467,6 +1467,7 @@ class DBConnectionPool(Thread):
         s = self.dbspec
         dbh, err = None, None
 
+        import pdb; pdb.set_trace()
         # If tracing, issue log line that identifies this connection series.
         trace = s["trace"] and ("RESTSQL:" + "".join(random.sample(string.ascii_letters, 12)))
         trace and cherrypy.log("%s ENTER %s@%s %s (%s) inuse=%d idle=%d" %
