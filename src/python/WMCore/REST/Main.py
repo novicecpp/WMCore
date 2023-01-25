@@ -403,7 +403,14 @@ class RESTDaemon(RESTMain):
                                 bufsize=0, close_fds=True, shell=False)
                 logger = subproc.stdin
             elif isinstance(self.logfile, str):
-                logger = open(self.logfile, "a+")
+                # Prefix file path with `fifo://` to open named pipe using
+                # unbuffered binary mode. E.g., `fifo:///testpipe` for named
+                # pipe created with command `mkfifo /testpipe`.
+                if self.logfile.startswith('fifo://'):
+                    self.logfile = self.logfile[7:]
+                    logger = open(self.logfile, "a+b", 0)
+                else:
+                    logger = open(self.logfile, "a+")
             else:
                 raise TypeError("'logfile' must be a string or array")
             os.dup2(logger.fileno(), sys.stdout.fileno())
