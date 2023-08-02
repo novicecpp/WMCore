@@ -317,6 +317,8 @@ class RESTFrontPage(object):
         response.headers['Last-Modified'] = httputil.HTTPDate(mtime)
         response.headers['Cache-Control'] = "public, max-age=%d" % 86400
         response.headers['ETag'] = '"%s"' % hashlib.sha1(encodeUnicodeToBytes(result)).hexdigest()
+        response.headers['Access-Control-Allow-Methods'] = 'GET'
+        response.headers['Access-Control-Allow-Origin'] = '*'
         cherrypy.lib.cptools.validate_since()
         cherrypy.lib.cptools.validate_etags()
         return result
