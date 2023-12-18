@@ -221,7 +221,8 @@ dependencies = {
     },
     'crabtaskworker': {
         'packages': ['WMCore.Credential', 'WMCore.Algorithms+', 'WMCore.WMSpec+',
-                     'WMCore.JobSplitting', 'WMCore.Services+', 'Utils+'],
+                     'WMCore.JobSplitting', 'WMCore.Services+', 'WMCore.BossAir+',
+                     'Utils+'],
         'systems': ['wmc-database', 'wmc-runtime'],
         'modules': ['WMCore.WMBS.File', 'WMCore.WMBS.WMBSBase', 'WMCore.WMBS.__init__'],
     },
