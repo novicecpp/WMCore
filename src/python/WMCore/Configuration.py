@@ -592,7 +592,9 @@ def loadConfigurationFile(filename):
     Load a Configuration File
 
     """
-
+    print('11111111111111111111111111111111111111111111111111111111111111111111')
+    print('11111111111111111111111111111111111111111111111111111111111111111111')
+    print('11111111111111111111111111111111111111111111111111111111111111111111')
     cfgBaseName = os.path.basename(filename).replace(".py", "")
     cfgDirName = os.path.dirname(filename)
     if not cfgDirName:
